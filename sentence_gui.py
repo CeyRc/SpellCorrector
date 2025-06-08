@@ -112,8 +112,6 @@ class Seq2SeqModel(torch.nn.Module):
     
 
 
-
-
 # ------------------ UYGULAMA GUI ------------------
 
 class SentenceCorrectorApp(QWidget):
@@ -258,3 +256,117 @@ class SentenceCorrectorApp(QWidget):
         back_button.setStyleSheet("background-color:#95a5a6;color:white;padding:10px;border:none;border-radius:6px")
         layout.addWidget(back_button)
 
+
+
+    def correct_text(self):
+        raw = self.input_text.toPlainText().strip()
+        if not raw:
+            return
+
+        # Model yüklü değilse sadece language_tool kullan
+        if not hasattr(self, 'model_loaded') or not self.model_loaded:
+            print("⚠️ Model yüklü değil! Sadece temel dilbilgisi kontrolü yapılıyor...")
+            matches = self.tool.check(raw)
+            corrected = language_tool_python.utils.correct(raw, matches)
+            self.output_text.setText(corrected)
+            return
+
+        print("🔄 AI model ile cümle düzeltiliyor...")
+        # Model yüklüyse normal işlemi yap
+        sentences = re.split(r'(?<=[.!?])\s+', raw)
+        corrected = []
+        for sentence in sentences:
+            result = self.correct_sentence(sentence)
+            corrected.append(result)
+        final = ' '.join(corrected)
+
+        self.output_text.setText(final)
+        print("✅ Cümle düzeltme işlemi tamamlandı!")
+
+    def correct_sentence(self, sentence, max_length=50):
+        if not sentence or len(sentence.strip().split()) <= 2:
+            # Kısa girişlerde seq2seq yerine language_tool kullan
+            matches = self.tool.check(sentence)
+            return language_tool_python.utils.correct(sentence, matches)
+
+        indices = self.vocab.sentence_to_indices(sentence)
+        if not indices:
+            return sentence
+
+        src_tensor = torch.tensor([indices], dtype=torch.long).to(self.device)
+        encoder_outputs, hidden, cell = self.model(src_tensor)
+        input_token = torch.tensor([[self.vocab.SOS_IDX]], dtype=torch.long).to(self.device)
+
+        output_indices = []
+        seen_tokens = set()
+        repeat_count = 0
+        last_token = None
+
+        for _ in range(max_length):
+            prediction, hidden, cell, _ = self.model.decoder(input_token, hidden, cell, encoder_outputs)
+            top1 = prediction.argmax(1).item()
+
+            if top1 == self.vocab.EOS_IDX:
+                break
+            if top1 == last_token:
+                repeat_count += 1
+                if repeat_count >= 5:
+                    break
+            else:
+                repeat_count = 0
+            last_token = top1
+
+            output_indices.append(top1)
+            input_token = torch.tensor([[top1]], dtype=torch.long).to(self.device)
+
+        result = self.vocab.indices_to_sentence(output_indices)
+        result = result.capitalize()
+        result = re.sub(r'\s+([.!?,])', r'\1', result)
+
+        # Eğer sonuç çok saçma şekilde uzunsa, yine language_tool ile düzelt
+        if len(result.split()) > 30:
+            matches = self.tool.check(sentence)
+            return language_tool_python.utils.correct(sentence, matches)
+
+        return result
+
+
+    def clear_text(self):
+        """Input ve output alanlarını temizle"""
+        self.input_text.clear()
+        self.output_text.clear()
+        print("🗑️ Metin alanları temizlendi!")
+
+    def load_pdf(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Select PDF File", "", "PDF Files (*.pdf)")
+        if path:
+            text = ""
+            with fitz.open(path) as doc:
+                for page in doc:
+                    text += page.get_text()
+            self.input_text.setText(text.strip())
+
+    def load_word(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Select Word File", "", "Word Files (*.docx)")
+        if path:
+            doc = docx.Document(path)
+            text = "\n".join([para.text for para in doc.paragraphs])
+            self.input_text.setText(text.strip())
+
+    def go_back_to_main(self):
+        import subprocess
+        import os
+        env = os.environ.copy()
+        env["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+        subprocess.Popen(["python", "arayuz2.py"], env=env)
+        self.close()
+
+
+# ------------------ MAIN ------------------
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = SentenceCorrectorApp()
+    window.show()
+    sys.exit(app.exec_())
