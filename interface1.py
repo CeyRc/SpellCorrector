@@ -29,7 +29,6 @@ class SpellCorrectorApp:
 
         self.animate_logo()
 
-<<<<<<< HEAD
 
 
 
@@ -56,7 +55,6 @@ class SpellCorrectorApp:
         self.sentence_label = tk.Label(self.root, text="For Sentence Correction",
                                        font=("Arial", 15), bg="#f8f8f6", fg="#444444")
         self.sentence_label.place(relx=0.7, rely=0.72, anchor="center")
-=======
        def animate_logo(self):
         size_step = 4
         y_step = 0.012
@@ -92,4 +90,3 @@ class SpellCorrectorApp:
             self.logo_label.place(relx=0.55, rely=self.target_y, anchor="center")
             self.title_label.place(relx=0.5, rely=self.target_y + 0.2, anchor="center")  # Ortalandı
             self.show_main_menu()
->>>>>>> c18683778de7e73449700556e58c834364beab88
