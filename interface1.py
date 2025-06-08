@@ -29,12 +29,9 @@ class SpellCorrectorApp:
 
         self.animate_logo()
 
-<<<<<<< HEAD
 
 
-
-
-        def show_main_menu(self):
+    def show_main_menu(self):
         word_icon = ImageTk.PhotoImage(Image.open("word_icon.jpg").resize((100, 100)))
         self.word_button = tk.Button(self.root, image=word_icon,
                                      command=self.open_word_screen, bg="#f8f8f6", bd=0,
@@ -56,8 +53,9 @@ class SpellCorrectorApp:
         self.sentence_label = tk.Label(self.root, text="For Sentence Correction",
                                        font=("Arial", 15), bg="#f8f8f6", fg="#444444")
         self.sentence_label.place(relx=0.7, rely=0.72, anchor="center")
-=======
-       def animate_logo(self):
+
+
+    def animate_logo(self):
         size_step = 4
         y_step = 0.012
 
@@ -92,4 +90,32 @@ class SpellCorrectorApp:
             self.logo_label.place(relx=0.55, rely=self.target_y, anchor="center")
             self.title_label.place(relx=0.5, rely=self.target_y + 0.2, anchor="center")  # Ortalandı
             self.show_main_menu()
->>>>>>> c18683778de7e73449700556e58c834364beab88
+
+
+
+    def open_sentence_screen(self):
+        env = os.environ.copy()
+        env["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+        subprocess.Popen(["python", "sentence_gui.py"], env=env)
+        self.root.withdraw()
+
+    def open_word_screen(self):
+        env = os.environ.copy()
+        env["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+        subprocess.Popen(["python", "wordgui.py"], env=env)
+        self.root.destroy()  
+
+    def new_window(self, title, label_text):
+        win = tk.Toplevel(self.root)
+        win.title(title)
+        win.geometry("400x200")
+        win.configure(bg="#f8f8f6")
+        tk.Label(win, text=label_text, bg="#f8f8f6").pack(pady=10)
+        tk.Entry(win, width=40).pack(pady=5)
+        tk.Button(win, text="Correct", command=lambda: print("Correction logic here")).pack(pady=10)
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = SpellCorrectorApp(root)
+    root.mainloop()
