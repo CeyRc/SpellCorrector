@@ -92,3 +92,33 @@ class SpellCorrectorApp:
         self.sentence_label = tk.Label(self.root, text="For Sentence Correction",
                                        font=("Arial", 15), bg="#f8f8f6", fg="#444444")
         self.sentence_label.place(relx=0.7, rely=0.77, anchor="center")
+
+
+
+ def open_sentence_screen(self):
+        print("🟡 Sentence ekranı başlatılıyor...")
+        env = os.environ.copy()
+        env["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+        subprocess.Popen(["python", "sentence_gui.py"], env=env)
+        self.root.withdraw()  # Ana pencereyi gizler, kapatmaz
+
+    def open_word_screen(self):
+        env = os.environ.copy()
+        env["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+        subprocess.Popen(["python", "wordgui.py"], env=env)
+        self.root.destroy()  # arayüz kapanacak
+
+    def new_window(self, title, label_text):
+        win = tk.Toplevel(self.root)
+        win.title(title)
+        win.geometry("400x200")
+        win.configure(bg="#f8f8f6")
+        tk.Label(win, text=label_text, bg="#f8f8f6").pack(pady=10)
+        tk.Entry(win, width=40).pack(pady=5)
+        tk.Button(win, text="Correct", command=lambda: print("Correction logic here")).pack(pady=10)
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = SpellCorrectorApp(root)
+    root.mainloop()
